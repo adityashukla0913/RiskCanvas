@@ -349,207 +349,310 @@ export default function FloatingChatbot() {
 
   return (
     <>
-      {/* Voice Assistant Overlay - Siri-like full screen experience */}
+      {/* Voice Assistant Overlay - Premium Siri-like full screen experience */}
       {voiceAssistantMode && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f0f23]">
-          {/* Close button */}
-          <button
-            onClick={stopVoiceAssistant}
-            className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20"
-            aria-label="Close voice assistant"
-          >
-            <span className="material-symbols-outlined text-2xl">close</span>
-          </button>
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden">
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+            {/* Floating orbs background effect */}
+            <div className="absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-purple-500/20 blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl animate-pulse delay-1000" />
+            <div className="absolute top-1/2 right-1/3 h-64 w-64 rounded-full bg-pink-500/15 blur-3xl animate-pulse delay-500" />
+          </div>
 
-          {/* Animated orb */}
-          <div className="relative mb-8">
-            <div
-              className={`h-40 w-40 rounded-full transition-all duration-500 ${
-                assistantStatus === 'listening'
-                  ? 'animate-pulse bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 shadow-[0_0_60px_rgba(168,85,247,0.5)]'
-                  : assistantStatus === 'processing'
-                  ? 'animate-spin bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 shadow-[0_0_60px_rgba(59,130,246,0.5)]'
-                  : assistantStatus === 'speaking'
-                  ? 'animate-bounce bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 shadow-[0_0_60px_rgba(34,197,94,0.5)]'
-                  : 'bg-gradient-to-br from-slate-600 to-slate-700'
-              }`}
-            />
-            {/* Inner glow */}
-            <div className="absolute inset-4 rounded-full bg-white/20 backdrop-blur-sm" />
-            {/* Icon */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="material-symbols-outlined text-5xl text-white drop-shadow-lg">
-                {assistantStatus === 'listening'
-                  ? 'mic'
-                  : assistantStatus === 'processing'
-                  ? 'psychology'
-                  : assistantStatus === 'speaking'
-                  ? 'graphic_eq'
-                  : 'assistant'}
-              </span>
+          {/* Header */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-6 py-5 z-10">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                <span className="material-symbols-outlined text-xl text-white">assistant</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">StockAI</h1>
+                <p className="text-xs text-white/50">Voice Assistant</p>
+              </div>
             </div>
+            <button
+              onClick={stopVoiceAssistant}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/80 backdrop-blur-sm transition hover:bg-white/20"
+              aria-label="Close voice assistant"
+            >
+              <span className="material-symbols-outlined text-xl">close</span>
+            </button>
           </div>
 
-          {/* Status text */}
-          <div className="mb-4 text-center">
-            <h2 className="mb-2 text-2xl font-bold text-white">
-              {assistantStatus === 'listening'
-                ? 'Listening...'
-                : assistantStatus === 'processing'
-                ? 'Thinking...'
-                : assistantStatus === 'speaking'
-                ? 'Speaking...'
-                : 'StockAI Assistant'}
-            </h2>
-            <p className="text-sm text-white/60">
-              {assistantStatus === 'listening'
-                ? 'Speak your question about the market'
-                : assistantStatus === 'processing'
-                ? 'Analyzing your question'
-                : assistantStatus === 'speaking'
-                ? 'Tap orb to interrupt'
-                : 'Tap to start'}
-            </p>
-          </div>
+          {/* Main content area */}
+          <div className="relative z-10 flex flex-col items-center">
+            {/* Animated orb with multiple layers */}
+            <div className="relative mb-10">
+              {/* Outer glow ring */}
+              <div
+                className={`absolute -inset-8 rounded-full transition-all duration-700 ${
+                  assistantStatus === 'listening'
+                    ? 'bg-gradient-to-br from-purple-500/30 via-pink-500/30 to-red-500/30 animate-pulse blur-xl'
+                    : assistantStatus === 'processing'
+                    ? 'bg-gradient-to-br from-blue-500/30 via-cyan-500/30 to-teal-500/30 animate-spin blur-xl'
+                    : assistantStatus === 'speaking'
+                    ? 'bg-gradient-to-br from-emerald-500/30 via-green-500/30 to-teal-500/30 animate-pulse blur-xl'
+                    : 'bg-slate-500/20 blur-xl'
+                }`}
+              />
+              
+              {/* Middle ring */}
+              <div
+                className={`absolute -inset-4 rounded-full transition-all duration-500 ${
+                  assistantStatus === 'listening'
+                    ? 'bg-gradient-to-br from-purple-400/40 to-pink-400/40'
+                    : assistantStatus === 'processing'
+                    ? 'bg-gradient-to-br from-blue-400/40 to-cyan-400/40 animate-spin'
+                    : assistantStatus === 'speaking'
+                    ? 'bg-gradient-to-br from-emerald-400/40 to-green-400/40'
+                    : 'bg-slate-600/30'
+                }`}
+              />
+              
+              {/* Main orb */}
+              <div
+                className={`relative h-36 w-36 rounded-full transition-all duration-500 flex items-center justify-center ${
+                  assistantStatus === 'listening'
+                    ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 shadow-[0_0_80px_rgba(168,85,247,0.6)]'
+                    : assistantStatus === 'processing'
+                    ? 'bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 shadow-[0_0_80px_rgba(59,130,246,0.6)]'
+                    : assistantStatus === 'speaking'
+                    ? 'bg-gradient-to-br from-emerald-500 via-green-500 to-teal-500 shadow-[0_0_80px_rgba(34,197,94,0.6)]'
+                    : 'bg-gradient-to-br from-slate-600 to-slate-700 shadow-[0_0_40px_rgba(100,116,139,0.3)]'
+                }`}
+              >
+                {/* Inner highlight */}
+                <div className="absolute inset-3 rounded-full bg-white/20 backdrop-blur-sm" />
+                
+                {/* Icon */}
+                <span className="material-symbols-outlined text-5xl text-white drop-shadow-lg relative z-10">
+                  {assistantStatus === 'listening'
+                    ? 'mic'
+                    : assistantStatus === 'processing'
+                    ? 'psychology'
+                    : assistantStatus === 'speaking'
+                    ? 'graphic_eq'
+                    : 'assistant'}
+                </span>
+              </div>
+              
+              {/* Sound wave animation for listening */}
+              {assistantStatus === 'listening' && (
+                <div className="absolute -inset-12 flex items-center justify-center">
+                  <div className="flex items-end gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-1 bg-white/40 rounded-full animate-pulse"
+                        style={{
+                          height: `${20 + Math.random() * 30}px`,
+                          animationDelay: `${i * 0.1}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-          {/* Live transcript */}
-          {interimTranscript && (
-            <div className="mx-4 max-w-md rounded-2xl bg-white/10 px-6 py-4 backdrop-blur-sm">
-              <p className="text-center text-lg italic text-white/80">
-                &quot;{interimTranscript}&quot;
+            {/* Status text */}
+            <div className="text-center mb-6">
+              <h2 className="mb-2 text-2xl font-semibold text-white tracking-tight">
+                {assistantStatus === 'listening'
+                  ? 'Listening...'
+                  : assistantStatus === 'processing'
+                  ? 'Thinking...'
+                  : assistantStatus === 'speaking'
+                  ? 'Speaking...'
+                  : 'Ready'}
+              </h2>
+              <p className="text-sm text-white/50 max-w-xs">
+                {assistantStatus === 'listening'
+                  ? 'Ask me anything about stocks and the market'
+                  : assistantStatus === 'processing'
+                  ? 'Analyzing your question...'
+                  : assistantStatus === 'speaking'
+                  ? 'Tap the orb to interrupt'
+                  : 'Tap the orb to start speaking'}
               </p>
             </div>
-          )}
 
-          {/* Recent messages in voice mode */}
+            {/* Live transcript */}
+            {interimTranscript && (
+              <div className="mx-4 max-w-md rounded-2xl bg-white/10 px-6 py-4 backdrop-blur-md border border-white/10">
+                <p className="text-center text-base text-white/90">
+                  &quot;{interimTranscript}&quot;
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Recent messages panel */}
           {messages.length > 1 && (
-            <div className="absolute bottom-24 left-4 right-4 max-h-32 overflow-y-auto rounded-2xl bg-black/30 p-4 backdrop-blur-sm">
-              <div className="space-y-2">
-                {messages.slice(-3).map((msg, idx) => (
-                  <p
-                    key={idx}
-                    className={`text-sm ${
-                      msg.role === 'user' ? 'text-purple-300' : 'text-white/80'
-                    }`}
-                  >
-                    <span className="font-semibold">
-                      {msg.role === 'user' ? 'You: ' : 'AI: '}
-                    </span>
-                    {msg.text.length > 100 ? msg.text.slice(0, 100) + '...' : msg.text}
-                  </p>
-                ))}
+            <div className="absolute bottom-28 left-4 right-4 z-10 max-w-lg mx-auto">
+              <div className="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-4 max-h-36 overflow-y-auto">
+                <p className="text-xs text-white/40 mb-2 font-medium uppercase tracking-wide">Recent</p>
+                <div className="space-y-2">
+                  {messages.slice(-2).map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex items-start gap-2 text-sm ${
+                        msg.role === 'user' ? 'text-purple-300' : 'text-white/80'
+                      }`}
+                    >
+                      <span className={`material-symbols-outlined text-sm mt-0.5 ${
+                        msg.role === 'user' ? 'text-purple-400' : 'text-emerald-400'
+                      }`}>
+                        {msg.role === 'user' ? 'person' : 'assistant'}
+                      </span>
+                      <p className="flex-1">
+                        {msg.text.length > 120 ? msg.text.slice(0, 120) + '...' : msg.text}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          {/* Tap to interact hint */}
-          <button
-            onClick={() => {
-              if (assistantStatus === 'speaking') {
-                stopSpeaking();
-              }
-            }}
-            className="absolute bottom-8 rounded-full bg-white/10 px-6 py-3 text-sm text-white/60 transition hover:bg-white/20"
-          >
-            {assistantStatus === 'speaking' ? 'Tap to stop speaking' : 'Say "Hey" to ask a question'}
-          </button>
+          {/* Bottom action button */}
+          <div className="absolute bottom-6 left-0 right-0 flex justify-center z-10">
+            <button
+              onClick={() => {
+                if (assistantStatus === 'speaking') {
+                  stopSpeaking();
+                }
+              }}
+              className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-6 py-3 text-sm text-white/70 transition hover:bg-white/20 border border-white/10"
+            >
+              <span className="material-symbols-outlined text-lg">
+                {assistantStatus === 'speaking' ? 'stop_circle' : 'tips_and_updates'}
+              </span>
+              {assistantStatus === 'speaking' ? 'Tap to stop' : 'Just start speaking'}
+            </button>
+          </div>
         </div>
       )}
 
       {open && !voiceAssistantMode && (
-        <div className="fixed bottom-24 right-4 z-[95] w-[min(24rem,calc(100vw-2rem))] rounded-[1.75rem] border border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl md:right-6">
-          <div className="flex items-center justify-between rounded-t-[1.75rem] bg-[#111827] px-5 py-4 text-white">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black tracking-wide">StockAI</span>
-                {speechSupported && (
-                  <div className="flex items-center gap-1">
+        <div className="fixed bottom-[88px] right-4 z-[95] w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white shadow-2xl md:right-6">
+          {/* Header */}
+          <div className="flex items-center justify-between rounded-t-2xl bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 text-white">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                <span className="material-symbols-outlined text-lg">assistant</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold">StockAI</span>
+                  {speechSupported && (
                     <button
                       onClick={() => setVoiceEnabled(!voiceEnabled)}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full transition ${
-                        voiceEnabled ? 'bg-green-500/30 text-green-400' : 'bg-white/10 text-slate-400'
+                      className={`flex h-5 w-5 items-center justify-center rounded-full transition ${
+                        voiceEnabled ? 'bg-emerald-500/30 text-emerald-400' : 'bg-white/10 text-slate-400'
                       }`}
                       aria-label={voiceEnabled ? 'Disable voice' : 'Enable voice'}
                       title={voiceEnabled ? 'Voice enabled' : 'Voice disabled'}
                     >
-                      <span className="material-symbols-outlined text-sm">
+                      <span className="material-symbols-outlined text-xs">
                         {voiceEnabled ? 'volume_up' : 'volume_off'}
                       </span>
                     </button>
-                    {isSpeaking && (
-                      <button
-                        onClick={stopSpeaking}
-                        className="flex h-6 w-6 items-center justify-center rounded-full bg-red-500/30 text-red-400 transition hover:bg-red-500/50"
-                        aria-label="Stop speaking"
-                        title="Stop speaking"
-                      >
-                        <span className="material-symbols-outlined text-sm">stop</span>
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-slate-300">
-                {speechSupported ? 'Voice-enabled guidance' : 'Guidance for beginners'}
+                  )}
+                </div>
+                <p className="text-xs text-slate-400">Market guidance assistant</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isSpeaking && (
+                <button
+                  onClick={stopSpeaking}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 text-red-400 transition hover:bg-red-500/30"
+                  aria-label="Stop speaking"
+                  title="Stop speaking"
+                >
+                  <span className="material-symbols-outlined text-sm">stop</span>
+                </button>
+              )}
               {/* Voice Assistant Mode Button */}
               {speechSupported && (
                 <button
                   onClick={startVoiceAssistant}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white transition hover:scale-105"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white transition hover:scale-105"
                   aria-label="Start voice assistant"
                   title="Talk to AI Assistant"
                 >
-                  <span className="material-symbols-outlined text-lg">assistant</span>
+                  <span className="material-symbols-outlined text-sm">mic</span>
                 </button>
               )}
-              <button
-                onClick={() => setOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-                aria-label="Close chatbot"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
             </div>
           </div>
 
-          <div data-lenis-prevent="true" className="max-h-96 space-y-3 overflow-y-auto px-4 py-4">
+          <div data-lenis-prevent="true" className="max-h-80 space-y-3 overflow-y-auto px-4 py-4 bg-slate-50">
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`group relative rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === 'user'
-                    ? 'ml-10 bg-[#5140c8] text-white'
-                    : 'mr-6 bg-slate-100 text-slate-700 cursor-pointer hover:bg-slate-200 transition'
-                  }`}
-                onClick={() => {
-                  if (message.role === 'assistant' && speechSupported && voiceEnabled) {
-                    speakText(message.text);
-                  }
-                }}
-                title={message.role === 'assistant' && speechSupported ? 'Click to hear this message' : undefined}
+                className={`group relative flex items-start gap-2 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
               >
-                {message.text}
-                {message.role === 'assistant' && speechSupported && (
-                  <span className="absolute bottom-1 right-2 opacity-0 group-hover:opacity-60 transition text-xs text-slate-500">
-                    <span className="material-symbols-outlined text-sm">volume_up</span>
+                {/* Avatar */}
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                  message.role === 'user' 
+                    ? 'bg-indigo-500 text-white' 
+                    : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                }`}>
+                  <span className="material-symbols-outlined text-sm">
+                    {message.role === 'user' ? 'person' : 'assistant'}
                   </span>
-                )}
+                </div>
+                
+                {/* Message bubble */}
+                <div
+                  className={`relative max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                    message.role === 'user'
+                      ? 'bg-indigo-500 text-white rounded-tr-sm'
+                      : 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-tl-sm cursor-pointer hover:bg-slate-50 transition'
+                  }`}
+                  onClick={() => {
+                    if (message.role === 'assistant' && speechSupported && voiceEnabled) {
+                      speakText(message.text);
+                    }
+                  }}
+                  title={message.role === 'assistant' && speechSupported ? 'Click to hear this message' : undefined}
+                >
+                  {message.text}
+                  {message.role === 'assistant' && speechSupported && (
+                    <span className="absolute -bottom-1 -right-1 opacity-0 group-hover:opacity-100 transition flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                      <span className="material-symbols-outlined text-xs">volume_up</span>
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
+            
             {loading && (
-              <div className="mr-6 rounded-2xl bg-slate-100 px-4 py-3 text-sm text-slate-500">
-                Thinking...
+              <div className="flex items-start gap-2">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                  <span className="material-symbols-outlined text-sm">assistant</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm border border-slate-100">
+                  <span className="flex gap-1">
+                    <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  </span>
+                  Thinking...
+                </div>
               </div>
             )}
+            
             {isSpeaking && (
-              <div className="mr-6 flex items-center gap-2 rounded-2xl bg-green-50 px-4 py-2 text-xs text-green-700">
+              <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700 border border-emerald-100">
                 <span className="material-symbols-outlined animate-pulse text-sm">graphic_eq</span>
                 Speaking... 
                 <button 
                   onClick={stopSpeaking}
-                  className="ml-auto text-green-600 hover:text-green-800 underline"
+                  className="ml-auto text-emerald-600 hover:text-emerald-800 font-medium"
                 >
                   Stop
                 </button>
@@ -557,85 +660,108 @@ export default function FloatingChatbot() {
             )}
           </div>
 
-          <div className="border-t border-slate-200 px-4 py-4">
-            <div className="mb-3 flex flex-wrap gap-2">
+          <div className="border-t border-slate-200 bg-white px-4 py-3 rounded-b-2xl">
+            {/* Quick questions */}
+            <div className="mb-3 flex flex-wrap gap-1.5">
               {QUICK_QUESTIONS.map((item) => (
                 <button
                   key={item}
                   onClick={() => askChatbot(item)}
-                  className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                  className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 transition hover:bg-indigo-100 hover:text-indigo-700"
                 >
-                  {item}
+                  {item.length > 35 ? item.slice(0, 35) + '...' : item}
                 </button>
               ))}
             </div>
 
+            {/* Input area */}
             <div className="flex items-end gap-2">
-              <textarea
-                data-lenis-prevent="true"
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                rows={2}
-                placeholder={isListening ? 'Listening...' : 'Ask about the market or a stock...'}
-                className={`min-h-[56px] flex-1 resize-none rounded-2xl border px-4 py-3 text-sm text-[#1c1c1e] outline-none transition ${
-                  isListening 
-                    ? 'border-red-400 bg-red-50' 
-                    : 'border-slate-200 focus:border-[#5140c8]'
-                }`}
-              />
-              {speechSupported && (
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  disabled={loading}
-                  className={`flex h-12 w-12 items-center justify-center rounded-2xl transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                    isListening
-                      ? 'animate-pulse bg-red-500 text-white'
-                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              <div className="relative flex-1">
+                <textarea
+                  data-lenis-prevent="true"
+                  value={question}
+                  onChange={(event) => setQuestion(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      askChatbot(question);
+                    }
+                  }}
+                  rows={1}
+                  placeholder={isListening ? 'Listening...' : 'Ask about the market...'}
+                  className={`w-full resize-none rounded-xl border py-2.5 pl-4 pr-10 text-sm text-slate-800 outline-none transition ${
+                    isListening 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-slate-200 bg-slate-50 focus:border-indigo-400 focus:bg-white'
                   }`}
-                  aria-label={isListening ? 'Stop listening' : 'Start voice input'}
-                  title={isListening ? 'Stop listening' : 'Speak your question'}
-                >
-                  <span className="material-symbols-outlined">
-                    {isListening ? 'mic_off' : 'mic'}
-                  </span>
-                </button>
-              )}
+                />
+                {/* Inline mic button */}
+                {speechSupported && (
+                  <button
+                    onClick={isListening ? stopListening : startListening}
+                    disabled={loading}
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full transition disabled:opacity-50 ${
+                      isListening
+                        ? 'animate-pulse bg-red-500 text-white'
+                        : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'
+                    }`}
+                    aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                    title={isListening ? 'Stop listening' : 'Speak your question'}
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {isListening ? 'mic_off' : 'mic'}
+                    </span>
+                  </button>
+                )}
+              </div>
+              
+              {/* Send button */}
               <button
                 onClick={() => askChatbot(question)}
                 disabled={loading || !question.trim()}
-                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#5140c8] text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500 text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send question"
               >
-                <span className="material-symbols-outlined">send</span>
+                <span className="material-symbols-outlined text-lg">send</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Floating action buttons */}
-      <div className="fixed bottom-4 right-4 z-[96] flex flex-col gap-3 md:bottom-6 md:right-6">
-        {/* Voice Assistant Button - Siri-like */}
-        {speechSupported && !voiceAssistantMode && (
+      {/* Floating action buttons - horizontal layout to avoid overlap */}
+      {!voiceAssistantMode && (
+        <div className="fixed bottom-4 right-4 z-[96] flex items-center gap-3 md:bottom-6 md:right-6">
+          {/* Voice Assistant Button - Siri-like */}
+          {speechSupported && (
+            <button
+              onClick={startVoiceAssistant}
+              className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-[0_0_25px_rgba(139,92,246,0.5)]"
+              aria-label="Start voice assistant"
+              title="Talk to AI Assistant"
+            >
+              <span className="material-symbols-outlined text-2xl">assistant</span>
+              {/* Pulse ring animation */}
+              <span className="absolute inset-0 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 opacity-40 animate-ping" />
+            </button>
+          )}
+          
+          {/* Chat Button */}
           <button
-            onClick={startVoiceAssistant}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white shadow-2xl transition hover:scale-105 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]"
-            aria-label="Start voice assistant"
-            title="Talk to AI Assistant"
+            onClick={() => setOpen((current) => !current)}
+            className={`flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all duration-300 hover:scale-110 ${
+              open 
+                ? 'bg-slate-700 text-white' 
+                : 'bg-[#5140c8] text-white hover:bg-[#4030b0]'
+            }`}
+            aria-label={open ? "Close chatbot" : "Open market chatbot"}
           >
-            <span className="material-symbols-outlined text-2xl">assistant</span>
+            <span className="material-symbols-outlined text-2xl">
+              {open ? 'close' : 'forum'}
+            </span>
           </button>
-        )}
-        
-        {/* Chat Button */}
-        <button
-          onClick={() => setOpen((current) => !current)}
-          className="flex h-16 w-16 items-center justify-center rounded-full bg-[#5140c8] text-white shadow-2xl transition hover:scale-105"
-          aria-label="Open market chatbot"
-        >
-          <span className="material-symbols-outlined text-3xl">forum</span>
-        </button>
-      </div>
+        </div>
+      )}
     </>
   );
 }
