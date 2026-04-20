@@ -34,8 +34,18 @@ export default function FloatingChatbot() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [voiceAssistantMode, setVoiceAssistantMode] = useState(false);
+  const [assistantStatus, setAssistantStatus] = useState('idle'); // idle, listening, processing, speaking
+  const [interimTranscript, setInterimTranscript] = useState('');
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
+  const voiceAssistantModeRef = useRef(false);
+  const isProcessingRef = useRef(false);
+
+  // Keep ref in sync with state for use in callbacks
+  useEffect(() => {
+    voiceAssistantModeRef.current = voiceAssistantMode;
+  }, [voiceAssistantMode]);
 
   // Initialize speech recognition and synthesis
   useEffect(() => {
@@ -45,8 +55,8 @@ export default function FloatingChatbot() {
       if (SpeechRecognition) {
         setSpeechSupported(true);
         recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.continuous = false;
-        recognitionRef.current.interimResults = false;
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
         recognitionRef.current.lang = 'en-US';
       }
 
@@ -68,8 +78,11 @@ export default function FloatingChatbot() {
   }, []);
 
   // Text-to-Speech function
-  const speakText = useCallback((text) => {
-    if (!synthRef.current || !voiceEnabled) return;
+  const speakText = useCallback((text, onComplete) => {
+    if (!synthRef.current || !voiceEnabled) {
+      onComplete?.();
+      return;
+    }
 
     // Cancel any ongoing speech
     synthRef.current.cancel();
@@ -92,9 +105,20 @@ export default function FloatingChatbot() {
       utterance.voice = preferredVoice;
     }
 
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setAssistantStatus('speaking');
+    };
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setAssistantStatus('idle');
+      onComplete?.();
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setAssistantStatus('idle');
+      onComplete?.();
+    };
 
     synthRef.current.speak(utterance);
   }, [voiceEnabled]);
@@ -104,6 +128,11 @@ export default function FloatingChatbot() {
     if (synthRef.current) {
       synthRef.current.cancel();
       setIsSpeaking(false);
+      if (voiceAssistantModeRef.current) {
+        setAssistantStatus('listening');
+      } else {
+        setAssistantStatus('idle');
+      }
     }
   }, []);
 
@@ -148,6 +177,136 @@ export default function FloatingChatbot() {
 
   const marketSnapshot = useMemo(() => buildMarketSnapshot(), []);
 
+  // Process voice input for assistant mode
+  const processVoiceInput = useCallback(async (transcript) => {
+    if (!transcript.trim() || isProcessingRef.current) return;
+    
+    isProcessingRef.current = true;
+    setAssistantStatus('processing');
+    setInterimTranscript('');
+    
+    setMessages((current) => [...current, { role: 'user', text: transcript }]);
+    setLoading(true);
+
+    try {
+      const reply = await generateMarketChatReply({
+        question: transcript,
+        marketSnapshot,
+      });
+
+      setMessages((current) => [...current, { role: 'assistant', text: reply }]);
+      
+      // Speak the response and then resume listening
+      speakText(reply, () => {
+        isProcessingRef.current = false;
+        if (voiceAssistantModeRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+            setAssistantStatus('listening');
+          } catch (e) {
+            // Recognition might already be running
+          }
+        }
+      });
+    } catch {
+      const errorMessage = 'I could not reach the AI service. Please try again.';
+      setMessages((current) => [
+        ...current,
+        { role: 'assistant', text: errorMessage },
+      ]);
+      
+      speakText(errorMessage, () => {
+        isProcessingRef.current = false;
+        if (voiceAssistantModeRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+            setAssistantStatus('listening');
+          } catch (e) {
+            // Recognition might already be running
+          }
+        }
+      });
+    }
+
+    setLoading(false);
+  }, [marketSnapshot, speakText]);
+
+  // Start voice assistant mode (Siri-like)
+  const startVoiceAssistant = useCallback(() => {
+    if (!recognitionRef.current || !speechSupported) return;
+
+    stopSpeaking();
+    setVoiceAssistantMode(true);
+    setAssistantStatus('listening');
+    setOpen(true);
+    
+    // Configure for voice assistant mode
+    recognitionRef.current.onresult = (event) => {
+      let interim = '';
+      let final = '';
+      
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += transcript;
+        } else {
+          interim += transcript;
+        }
+      }
+      
+      setInterimTranscript(interim);
+      
+      if (final) {
+        processVoiceInput(final);
+      }
+    };
+
+    recognitionRef.current.onerror = (event) => {
+      console.error('Voice assistant error:', event.error);
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        setAssistantStatus('idle');
+      }
+    };
+
+    recognitionRef.current.onend = () => {
+      // Auto-restart if still in voice assistant mode and not processing
+      if (voiceAssistantModeRef.current && !isProcessingRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {
+          // Might already be running
+        }
+      }
+    };
+
+    try {
+      recognitionRef.current.start();
+      // Greeting
+      speakText("Hi! I'm your StockAI assistant. How can I help you with the market today?");
+    } catch (error) {
+      console.error('Failed to start voice assistant:', error);
+      setVoiceAssistantMode(false);
+      setAssistantStatus('idle');
+    }
+  }, [speechSupported, stopSpeaking, processVoiceInput, speakText]);
+
+  // Stop voice assistant mode
+  const stopVoiceAssistant = useCallback(() => {
+    setVoiceAssistantMode(false);
+    setAssistantStatus('idle');
+    setInterimTranscript('');
+    isProcessingRef.current = false;
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+    if (synthRef.current) {
+      synthRef.current.cancel();
+    }
+    setIsSpeaking(false);
+    setIsListening(false);
+  }, []);
+
   async function askChatbot(nextQuestion) {
     const trimmed = nextQuestion.trim();
     if (!trimmed || loading) {
@@ -190,7 +349,114 @@ export default function FloatingChatbot() {
 
   return (
     <>
-      {open && (
+      {/* Voice Assistant Overlay - Siri-like full screen experience */}
+      {voiceAssistantMode && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1a2e] via-[#16213e] to-[#0f0f23]">
+          {/* Close button */}
+          <button
+            onClick={stopVoiceAssistant}
+            className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white/80 transition hover:bg-white/20"
+            aria-label="Close voice assistant"
+          >
+            <span className="material-symbols-outlined text-2xl">close</span>
+          </button>
+
+          {/* Animated orb */}
+          <div className="relative mb-8">
+            <div
+              className={`h-40 w-40 rounded-full transition-all duration-500 ${
+                assistantStatus === 'listening'
+                  ? 'animate-pulse bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 shadow-[0_0_60px_rgba(168,85,247,0.5)]'
+                  : assistantStatus === 'processing'
+                  ? 'animate-spin bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 shadow-[0_0_60px_rgba(59,130,246,0.5)]'
+                  : assistantStatus === 'speaking'
+                  ? 'animate-bounce bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 shadow-[0_0_60px_rgba(34,197,94,0.5)]'
+                  : 'bg-gradient-to-br from-slate-600 to-slate-700'
+              }`}
+            />
+            {/* Inner glow */}
+            <div className="absolute inset-4 rounded-full bg-white/20 backdrop-blur-sm" />
+            {/* Icon */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="material-symbols-outlined text-5xl text-white drop-shadow-lg">
+                {assistantStatus === 'listening'
+                  ? 'mic'
+                  : assistantStatus === 'processing'
+                  ? 'psychology'
+                  : assistantStatus === 'speaking'
+                  ? 'graphic_eq'
+                  : 'assistant'}
+              </span>
+            </div>
+          </div>
+
+          {/* Status text */}
+          <div className="mb-4 text-center">
+            <h2 className="mb-2 text-2xl font-bold text-white">
+              {assistantStatus === 'listening'
+                ? 'Listening...'
+                : assistantStatus === 'processing'
+                ? 'Thinking...'
+                : assistantStatus === 'speaking'
+                ? 'Speaking...'
+                : 'StockAI Assistant'}
+            </h2>
+            <p className="text-sm text-white/60">
+              {assistantStatus === 'listening'
+                ? 'Speak your question about the market'
+                : assistantStatus === 'processing'
+                ? 'Analyzing your question'
+                : assistantStatus === 'speaking'
+                ? 'Tap orb to interrupt'
+                : 'Tap to start'}
+            </p>
+          </div>
+
+          {/* Live transcript */}
+          {interimTranscript && (
+            <div className="mx-4 max-w-md rounded-2xl bg-white/10 px-6 py-4 backdrop-blur-sm">
+              <p className="text-center text-lg italic text-white/80">
+                &quot;{interimTranscript}&quot;
+              </p>
+            </div>
+          )}
+
+          {/* Recent messages in voice mode */}
+          {messages.length > 1 && (
+            <div className="absolute bottom-24 left-4 right-4 max-h-32 overflow-y-auto rounded-2xl bg-black/30 p-4 backdrop-blur-sm">
+              <div className="space-y-2">
+                {messages.slice(-3).map((msg, idx) => (
+                  <p
+                    key={idx}
+                    className={`text-sm ${
+                      msg.role === 'user' ? 'text-purple-300' : 'text-white/80'
+                    }`}
+                  >
+                    <span className="font-semibold">
+                      {msg.role === 'user' ? 'You: ' : 'AI: '}
+                    </span>
+                    {msg.text.length > 100 ? msg.text.slice(0, 100) + '...' : msg.text}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tap to interact hint */}
+          <button
+            onClick={() => {
+              if (assistantStatus === 'speaking') {
+                stopSpeaking();
+              }
+            }}
+            className="absolute bottom-8 rounded-full bg-white/10 px-6 py-3 text-sm text-white/60 transition hover:bg-white/20"
+          >
+            {assistantStatus === 'speaking' ? 'Tap to stop speaking' : 'Say "Hey" to ask a question'}
+          </button>
+        </div>
+      )}
+
+      {open && !voiceAssistantMode && (
         <div className="fixed bottom-24 right-4 z-[95] w-[min(24rem,calc(100vw-2rem))] rounded-[1.75rem] border border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl md:right-6">
           <div className="flex items-center justify-between rounded-t-[1.75rem] bg-[#111827] px-5 py-4 text-white">
             <div>
@@ -227,13 +493,26 @@ export default function FloatingChatbot() {
                 {speechSupported ? 'Voice-enabled guidance' : 'Guidance for beginners'}
               </div>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-              aria-label="Close chatbot"
-            >
-              <span className="material-symbols-outlined text-lg">close</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Voice Assistant Mode Button */}
+              {speechSupported && (
+                <button
+                  onClick={startVoiceAssistant}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white transition hover:scale-105"
+                  aria-label="Start voice assistant"
+                  title="Talk to AI Assistant"
+                >
+                  <span className="material-symbols-outlined text-lg">assistant</span>
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                aria-label="Close chatbot"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
           </div>
 
           <div data-lenis-prevent="true" className="max-h-96 space-y-3 overflow-y-auto px-4 py-4">
@@ -334,13 +613,29 @@ export default function FloatingChatbot() {
         </div>
       )}
 
-      <button
-        onClick={() => setOpen((current) => !current)}
-        className="fixed bottom-4 right-4 z-[96] flex h-16 w-16 items-center justify-center rounded-full bg-[#5140c8] text-white shadow-2xl transition hover:scale-105 md:bottom-6 md:right-6"
-        aria-label="Open market chatbot"
-      >
-        <span className="material-symbols-outlined text-3xl">forum</span>
-      </button>
+      {/* Floating action buttons */}
+      <div className="fixed bottom-4 right-4 z-[96] flex flex-col gap-3 md:bottom-6 md:right-6">
+        {/* Voice Assistant Button - Siri-like */}
+        {speechSupported && !voiceAssistantMode && (
+          <button
+            onClick={startVoiceAssistant}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-red-500 text-white shadow-2xl transition hover:scale-105 hover:shadow-[0_0_30px_rgba(168,85,247,0.4)]"
+            aria-label="Start voice assistant"
+            title="Talk to AI Assistant"
+          >
+            <span className="material-symbols-outlined text-2xl">assistant</span>
+          </button>
+        )}
+        
+        {/* Chat Button */}
+        <button
+          onClick={() => setOpen((current) => !current)}
+          className="flex h-16 w-16 items-center justify-center rounded-full bg-[#5140c8] text-white shadow-2xl transition hover:scale-105"
+          aria-label="Open market chatbot"
+        >
+          <span className="material-symbols-outlined text-3xl">forum</span>
+        </button>
+      </div>
     </>
   );
 }
